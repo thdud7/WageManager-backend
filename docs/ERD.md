@@ -36,7 +36,7 @@ erDiagram
     Employer {
         bigint id PK
         bigint user_id FK "User ID"
-        string business_name "사업체명"
+        string phone "전화번호"
         datetime created_at
         datetime updated_at
     }
@@ -56,9 +56,9 @@ erDiagram
         bigint id PK
         bigint employer_id FK "Employer ID"
         string business_number UK "사업자등록번호"
-        string name "사업장명"
+        string business_name "사업장명"
+        string name "지점명/별칭"
         string address "주소"
-        string phone "전화번호"
         string color_code "캘린더 색상 코드 (#RRGGBB)"
         boolean is_active "활성화 상태"
         datetime created_at
@@ -70,9 +70,7 @@ erDiagram
         bigint workplace_id FK "Workplace ID"
         bigint worker_id FK "Worker ID"
         decimal hourly_wage "시급"
-        string work_days "근무요일 (JSON: [1,2,3,4,5])"
-        time work_start_time "근무 시작 시간"
-        time work_end_time "근무 종료 시간"
+        string work_days "근무요일 (JSON: [1,2,3,4,5,6,7] 1=월~7=일)"
         date contract_start_date "계약 시작일"
         date contract_end_date "계약 종료일 (nullable)"
         int payment_day "급여 지급일(매월 N일)"
@@ -88,7 +86,7 @@ erDiagram
         time scheduled_start_time "예정 시작 시간"
         time scheduled_end_time "예정 종료 시간"
         decimal scheduled_hours "예정 근무 시간"
-        enum status "STATUS(SCHEDULED, MODIFIED, CANCELLED)"
+        enum status "STATUS(SCHEDULED, MODIFIED, COMPLETED)"
         string memo "메모"
         datetime created_at
         datetime updated_at
@@ -182,9 +180,9 @@ erDiagram
         boolean push_enabled "푸시 알림"
         boolean email_enabled "이메일 알림"
         boolean sms_enabled "SMS 알림"
-        boolean schedule_change_alert "일정 변경 알림"
-        boolean payment_alert "송금 알림"
-        boolean correction_request_alert "정정 요청 알림"
+        boolean schedule_change_alert_enabled "일정 변경 알림"
+        boolean payment_alert_enabled "송금 알림"
+        boolean correction_request_alert_enabled "정정 요청 알림"
         datetime created_at
         datetime updated_at
     }
@@ -200,7 +198,7 @@ erDiagram
 
 ### 2. Employer (고용주)
 - User를 상속받는 고용주 전용 정보
-- 사업체 관련 정보 관리
+- **phone**: 고용주 연락처 (모든 사업장에 공통 사용)
 
 ### 3. Worker (근로자)
 - User를 상속받는 근로자 전용 정보
@@ -211,18 +209,23 @@ erDiagram
 ### 4. Workplace (사업장)
 - 고용주가 운영하는 사업장 정보
 - 사업자등록번호로 유효성 검증
+- **business_name**: 사업장명 (법인명 등)
+- **name**: 지점명 또는 별칭 (예: "홍대점", "강남점")
 - **color_code**: 캘린더에서 근무지별 색상 구분을 위한 필드
+- 한 고용주가 여러 사업장을 운영할 수 있음
 
 ### 5. WorkerContract (근로 계약)
 - 사업장과 근로자 간의 근로 계약
-- 시급, 근무 시간, 지급일 등 계약 조건
-- work_days는 JSON 배열로 저장 (예: [1,2,3,4,5] = 월~금)
+- 시급, 근무요일, 지급일 등 계약 조건
+- **work_days**: JSON 배열로 저장 (예: [1,2,3,4,5] = 월~금, 1=월요일~7=일요일)
+- 근무 시작/종료 시간은 삭제 (실제 근무는 WorkSchedule에서 관리)
 
 ### 6. WorkSchedule (근무 일정)
 - 예정된 근무 스케줄
 - 계약 기반으로 자동 생성 또는 수동 등록
-- **scheduled_hours**: 예정 근무 시간 추가
-- **memo**: 일정 메모 추가
+- **scheduled_hours**: 예정 근무 시간
+- **memo**: 일정 메모
+- **status**: SCHEDULED(예정), MODIFIED(수정됨), COMPLETED(완료) - CANCELLED 제거
 
 ### 7. WorkRecord (근무 기록)
 - 실제 출퇴근 기록
