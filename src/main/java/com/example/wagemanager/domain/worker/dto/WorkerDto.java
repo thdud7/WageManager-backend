@@ -16,8 +16,8 @@ public class WorkerDto {
         private Long id;
         private Long userId;
         private String workerCode;
-        // private String accountNumber; // 현재 기획에는 노출되지 않음
-        // private String bankName;      // 현재 기획에는 노출되지 않음
+        // private String accountNumber;
+        // private String bankName;
         private String kakaoPayLink;
 
         public static Response from(Worker worker) {
@@ -37,8 +37,8 @@ public class WorkerDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class UpdateRequest {
-        // private String accountNumber; // 현재 미사용
-        // private String bankName;      // 현재 미사용
+        // private String accountNumber;
+        // private String bankName;
         private String kakaoPayLink;
     }
 }
