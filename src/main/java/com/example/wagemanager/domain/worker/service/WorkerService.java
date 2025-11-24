@@ -43,7 +43,17 @@ public class WorkerService {
         Worker worker = workerRepository.findById(workerId)
                 .orElseThrow(() -> new IllegalArgumentException("근로자를 찾을 수 없습니다."));
 
-        worker.updateKakaoPayLink(request.getKakaoPayLink());
+        worker.updateAccount(request.getAccountNumber(), request.getBankName(), request.getKakaoPayLink());
+
+        return WorkerDto.Response.from(worker);
+    }
+
+    @Transactional
+    public WorkerDto.Response updateWorkerByUserId(Long userId, WorkerDto.UpdateRequest request) {
+        Worker worker = workerRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("근로자 정보를 찾을 수 없습니다."));
+
+        worker.updateAccount(request.getAccountNumber(), request.getBankName(), request.getKakaoPayLink());
 
         return WorkerDto.Response.from(worker);
     }
