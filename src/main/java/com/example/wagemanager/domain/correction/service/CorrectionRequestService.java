@@ -33,7 +33,7 @@ public class CorrectionRequestService {
                 .orElseThrow(() -> new IllegalArgumentException("근무 기록을 찾을 수 없습니다."));
 
         // 해당 근무기록에 이미 대기중인 정정요청이 있는지 확인
-        if (correctionRequestRepository.existsPendingByWorkRecordId(request.getWorkRecordId())) {
+        if (correctionRequestRepository.existsByWorkRecordIdAndStatus(request.getWorkRecordId(), CorrectionStatus.PENDING)) {
             throw new IllegalStateException("해당 근무 기록에 이미 대기중인 정정요청이 있습니다.");
         }
 
@@ -45,6 +45,11 @@ public class CorrectionRequestService {
         CorrectionRequest correctionRequest = CorrectionRequest.builder()
                 .workRecord(workRecord)
                 .requester(requester)
+                // 원본 시간 저장 (생성 시점의 WorkRecord 값)
+                .originalWorkDate(workRecord.getWorkDate())
+                .originalStartTime(workRecord.getStartTime())
+                .originalEndTime(workRecord.getEndTime())
+                // 요청 시간
                 .requestedWorkDate(request.getRequestedWorkDate())
                 .requestedStartTime(request.getRequestedStartTime())
                 .requestedEndTime(request.getRequestedEndTime())

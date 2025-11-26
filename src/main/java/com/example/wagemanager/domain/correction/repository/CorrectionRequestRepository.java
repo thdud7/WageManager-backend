@@ -72,6 +72,9 @@ public interface CorrectionRequestRepository extends JpaRepository<CorrectionReq
     // 특정 근무기록에 대한 대기중인 정정요청 존재 여부 확인
     @Query("SELECT COUNT(cr) > 0 FROM CorrectionRequest cr " +
             "WHERE cr.workRecord.id = :workRecordId " +
-            "AND cr.status = 'PENDING'")
-    boolean existsPendingByWorkRecordId(@Param("workRecordId") Long workRecordId);
+            "AND cr.status = :status")
+    boolean existsByWorkRecordIdAndStatus(
+            @Param("workRecordId") Long workRecordId,
+            @Param("status") CorrectionStatus status
+    );
 }
