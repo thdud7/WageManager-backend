@@ -34,6 +34,7 @@ public class Payment extends BaseEntity {
     @Builder.Default
     private PaymentStatus status = PaymentStatus.PENDING;
 
+    // 급여 송금이 완료된 시간 (status가 COMPLETED일 때만 값이 존재)
     @Column(name = "payment_date")
     private LocalDateTime paymentDate;
 
