@@ -98,9 +98,22 @@ public class WorkRecord extends BaseEntity {
     @Column(name = "memo", columnDefinition = "TEXT")
     private String memo;
 
+    // 급여 칼럼 (세금 공제 전 금액)
+    @Column(name = "base_salary", precision = 12, scale = 2)
+    @Builder.Default
+    private BigDecimal baseSalary = BigDecimal.ZERO;
+
+    @Column(name = "night_salary", precision = 12, scale = 2)
+    @Builder.Default
+    private BigDecimal nightSalary = BigDecimal.ZERO;
+
+    @Column(name = "holiday_salary", precision = 12, scale = 2)
+    @Builder.Default
+    private BigDecimal holidaySalary = BigDecimal.ZERO;
+
     @Column(name = "total_salary", precision = 12, scale = 2)
     @Builder.Default
-    private BigDecimal totalSalary = null;
+    private BigDecimal totalSalary = BigDecimal.ZERO;
 
     // 근무 시간 수정 (근무 전/후 모두 사용)
     public void updateWorkTime(LocalTime startTime, LocalTime endTime, String memo) {
@@ -142,34 +155,62 @@ public class WorkRecord extends BaseEntity {
         long minutes = java.time.Duration.between(startTime, endTime).toMinutes();
         this.totalHours = BigDecimal.valueOf(minutes).divide(BigDecimal.valueOf(60), 2, java.math.RoundingMode.HALF_UP);
 
-        // TODO: 야간 근무 시간 분류 (22시~06시)
-        // TODO: 휴일 근무 여부 판별 및 시간 분류
-        // TODO: 위 두 조건을 제외한 시간을 일반 근무 시간으로 분류
+        // 휴일 여부 판별 (일요일=0, 토요일=6)
+        boolean isHoliday = workDate.getDayOfWeek().getValue() >= 6;
 
-        // 임시 로직 (실제 구현 필요)
-        // 일반 근무 시간 (8시간 이내)
-        if (this.totalHours.compareTo(BigDecimal.valueOf(8)) <= 0) {
-            this.regularHours = this.totalHours;
-        } else {
-            this.regularHours = BigDecimal.valueOf(8);
+        // 야간 시간과 주간 시간 분류
+        BigDecimal nightHours = BigDecimal.ZERO;
+        BigDecimal dayHours = BigDecimal.ZERO;
+
+        LocalTime nightStart = LocalTime.of(22, 0);
+        LocalTime nightEnd = LocalTime.of(6, 0);
+
+        if (startTime.isBefore(nightEnd)) {
+            // 06시 이전에 시작: 야간 근무
+            LocalTime actualEnd = endTime.isBefore(nightEnd) ? endTime : nightEnd;
+            long nightMinutes = java.time.Duration.between(startTime, actualEnd).toMinutes();
+            nightHours = BigDecimal.valueOf(nightMinutes).divide(BigDecimal.valueOf(60), 2, java.math.RoundingMode.HALF_UP);
         }
 
-        // 야간 근무 (22시~06시) - 추후 구현
-        this.nightHours = BigDecimal.ZERO;
+        if (endTime.isAfter(nightStart)) {
+            // 22시 이후에 종료: 야간 근무
+            LocalTime actualStart = startTime.isAfter(nightStart) ? startTime : nightStart;
+            long nightMinutes = java.time.Duration.between(actualStart, endTime).toMinutes();
+            nightHours = nightHours.add(BigDecimal.valueOf(nightMinutes).divide(BigDecimal.valueOf(60), 2, java.math.RoundingMode.HALF_UP));
+        }
 
-        // 휴일 근무 - 추후 구현
-        this.holidayHours = BigDecimal.ZERO;
+        // 주간 시간 = 전체 시간 - 야간 시간
+        dayHours = this.totalHours.subtract(nightHours);
+
+        // 휴일 여부에 따라 분류
+        if (isHoliday) {
+            this.holidayHours = dayHours;
+            this.nightHours = nightHours;
+            this.regularHours = BigDecimal.ZERO;
+        } else {
+            this.nightHours = nightHours;
+            this.regularHours = dayHours;
+            this.holidayHours = BigDecimal.ZERO;
+        }
     }
 
     // 총 급여 계산 (세금 공제, 주휴수당, 연장근로 미적용)
     // 각 근무 시간(일반/야간/휴일)에 맞는 시급을 적용하여 그 날의 총 급여 계산
     private void calculateTotalSalary() {
-        // TODO: 계약 정보에서 기본 시급 조회
-        // TODO: 야간 근무 시급 계산 (기본시급 + 야간 수당)
-        // TODO: 휴일 근무 시급 계산 (기본시급 + 휴일 수당)
-        // 총 급여 = (일반 시간 × 기본시급) + (야간 시간 × 야간시급) + (휴일 시간 × 휴일시급)
+        BigDecimal hourlyWage = this.contract.getHourlyWage();
 
-        // 임시 계산 (실제 구현 필요)
-        this.totalSalary = BigDecimal.ZERO;
+        // 기본 급여 = 일반 근무 시간 × 기본시급
+        this.baseSalary = this.regularHours.multiply(hourlyWage);
+
+        // 야간 급여 = 야간 근무 시간 × (기본시급 × 1.5)
+        BigDecimal nightWage = hourlyWage.multiply(BigDecimal.valueOf(1.5));
+        this.nightSalary = this.nightHours.multiply(nightWage);
+
+        // 휴일 급여 = 휴일 근무 시간 × (기본시급 × 1.5)
+        BigDecimal holidayWage = hourlyWage.multiply(BigDecimal.valueOf(1.5));
+        this.holidaySalary = this.holidayHours.multiply(holidayWage);
+
+        // 총 급여 = 기본급 + 야간급 + 휴일급
+        this.totalSalary = this.baseSalary.add(this.nightSalary).add(this.holidaySalary);
     }
 }
