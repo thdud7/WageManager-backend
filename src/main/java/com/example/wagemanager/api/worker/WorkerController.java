@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "근로자", description = "근로자 정보 조회 및 관리 API")
@@ -18,6 +19,7 @@ public class WorkerController {
     private final WorkerService workerService;
 
     @Operation(summary = "근로자 조회 (ID)", description = "근로자 ID로 근로자 정보를 조회합니다.")
+    @PreAuthorize("@workerPermission.canAccess(#workerId)")
     @GetMapping("/{workerId}")
     public ApiResponse<WorkerDto.Response> getWorkerById(
             @Parameter(description = "근로자 ID", required = true) @PathVariable Long workerId) {
@@ -25,6 +27,7 @@ public class WorkerController {
     }
 
     @Operation(summary = "근로자 조회 (사용자 ID)", description = "사용자 ID로 근로자 정보를 조회합니다.")
+    @PreAuthorize("@workerPermission.canAccessByUserId(#userId)")
     @GetMapping("/user/{userId}")
     public ApiResponse<WorkerDto.Response> getWorkerByUserId(
             @Parameter(description = "사용자 ID", required = true) @PathVariable Long userId) {
@@ -39,6 +42,7 @@ public class WorkerController {
     }
 
     @Operation(summary = "근로자 정보 수정", description = "근로자 정보를 수정합니다.")
+    @PreAuthorize("@workerPermission.canAccess(#workerId)")
     @PutMapping("/{workerId}")
     public ApiResponse<WorkerDto.Response> updateWorker(
             @Parameter(description = "근로자 ID", required = true) @PathVariable Long workerId,

@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,6 +25,7 @@ public class UserController {
     private final WorkerService workerService;
 
     @Operation(summary = "사용자 조회 (ID)", description = "사용자 ID로 사용자 정보를 조회합니다.")
+    @PreAuthorize("@userPermission.canAccess(#userId)")
     @GetMapping("/{userId}")
     public ApiResponse<UserDto.Response> getUserById(
             @Parameter(description = "사용자 ID", required = true) @PathVariable Long userId) {
@@ -31,6 +33,7 @@ public class UserController {
     }
 
     @Operation(summary = "사용자 조회 (카카오 ID)", description = "카카오 ID로 사용자 정보를 조회합니다.")
+    @PreAuthorize("@userPermission.canAccessByKakaoId(#kakaoId)")
     @GetMapping("/kakao/{kakaoId}")
     public ApiResponse<UserDto.Response> getUserByKakaoId(
             @Parameter(description = "카카오 ID", required = true) @PathVariable String kakaoId) {
@@ -38,6 +41,7 @@ public class UserController {
     }
 
     @Operation(summary = "사용자 정보 수정", description = "특정 사용자의 정보를 수정합니다.")
+    @PreAuthorize("@userPermission.canAccess(#userId)")
     @PutMapping("/{userId}")
     public ApiResponse<UserDto.Response> updateUser(
             @Parameter(description = "사용자 ID", required = true) @PathVariable Long userId,
