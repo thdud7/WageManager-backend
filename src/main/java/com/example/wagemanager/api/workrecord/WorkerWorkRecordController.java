@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,6 +35,7 @@ public class WorkerWorkRecordController {
     }
 
     @Operation(summary = "근무 기록 상세 조회", description = "특정 근무 기록의 상세 정보를 조회합니다.")
+    @PreAuthorize("@workRecordPermission.canAccessAsWorker(#id)")
     @GetMapping("/{id}")
     public ApiResponse<WorkRecordDto.DetailedResponse> getWorkRecord(
             @Parameter(description = "근무 기록 ID", required = true) @PathVariable Long id) {
@@ -41,6 +43,7 @@ public class WorkerWorkRecordController {
     }
 
     @Operation(summary = "근무 완료 처리", description = "근무를 완료 상태로 변경합니다.")
+    @PreAuthorize("@workRecordPermission.canAccessAsWorker(#id)")
     @PutMapping("/{id}/complete")
     public ApiResponse<Void> completeWorkRecord(
             @Parameter(description = "근무 기록 ID", required = true) @PathVariable Long id) {

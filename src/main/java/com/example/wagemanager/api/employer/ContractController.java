@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,6 +22,7 @@ public class ContractController {
     private final ContractService contractService;
 
     @Operation(summary = "사업장에 근로자 추가", description = "사업장에 근로자를 추가하고 계약을 생성합니다.")
+    @PreAuthorize("@workplacePermission.canAccess(#workplaceId)")
     @PostMapping("/workplaces/{workplaceId}/workers")
     public ApiResponse<ContractDto.Response> addWorkerToWorkplace(
             @Parameter(description = "사업장 ID", required = true) @PathVariable Long workplaceId,
@@ -29,6 +31,7 @@ public class ContractController {
     }
 
     @Operation(summary = "사업장의 근로자 목록 조회", description = "특정 사업장에 소속된 근로자 목록을 조회합니다.")
+    @PreAuthorize("@workplacePermission.canAccess(#workplaceId)")
     @GetMapping("/workplaces/{workplaceId}/workers")
     public ApiResponse<List<ContractDto.ListResponse>> getWorkplaceWorkers(
             @Parameter(description = "사업장 ID", required = true) @PathVariable Long workplaceId) {
@@ -36,6 +39,7 @@ public class ContractController {
     }
 
     @Operation(summary = "계약 상세 조회", description = "특정 근로 계약의 상세 정보를 조회합니다.")
+    @PreAuthorize("@contractPermission.canAccessAsEmployer(#id)")
     @GetMapping("/contracts/{id}")
     public ApiResponse<ContractDto.Response> getContract(
             @Parameter(description = "계약 ID", required = true) @PathVariable Long id) {
@@ -43,6 +47,7 @@ public class ContractController {
     }
 
     @Operation(summary = "계약 정보 수정", description = "근로 계약 정보를 수정합니다.")
+    @PreAuthorize("@contractPermission.canAccessAsEmployer(#id)")
     @PutMapping("/contracts/{id}")
     public ApiResponse<ContractDto.Response> updateContract(
             @Parameter(description = "계약 ID", required = true) @PathVariable Long id,
@@ -51,6 +56,7 @@ public class ContractController {
     }
 
     @Operation(summary = "계약 종료", description = "근로 계약을 종료 처리합니다.")
+    @PreAuthorize("@contractPermission.canAccessAsEmployer(#id)")
     @DeleteMapping("/contracts/{id}")
     public ApiResponse<Void> terminateContract(
             @Parameter(description = "계약 ID", required = true) @PathVariable Long id) {
