@@ -22,6 +22,12 @@ import java.time.LocalTime;
 @Builder
 public class WorkRecord extends BaseEntity {
 
+    // 근무 시간 및 급여 계산 상수
+    private static final int WEEKEND_DAY_THRESHOLD = 6;
+    private static final LocalTime NIGHT_SHIFT_START = LocalTime.of(22, 0);
+    private static final LocalTime NIGHT_SHIFT_END = LocalTime.of(6, 0);
+    private static final BigDecimal OVERTIME_RATE = BigDecimal.valueOf(1.5);
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -156,14 +162,14 @@ public class WorkRecord extends BaseEntity {
         this.totalHours = BigDecimal.valueOf(minutes).divide(BigDecimal.valueOf(60), 2, java.math.RoundingMode.HALF_UP);
 
         // 휴일 여부 판별 (일요일=0, 토요일=6)
-        boolean isHoliday = workDate.getDayOfWeek().getValue() >= 6;
+        boolean isHoliday = workDate.getDayOfWeek().getValue() >= WEEKEND_DAY_THRESHOLD;
 
         // 야간 시간과 주간 시간 분류
         BigDecimal nightHours = BigDecimal.ZERO;
         BigDecimal dayHours = BigDecimal.ZERO;
 
-        LocalTime nightStart = LocalTime.of(22, 0);
-        LocalTime nightEnd = LocalTime.of(6, 0);
+        LocalTime nightStart = NIGHT_SHIFT_START;
+        LocalTime nightEnd = NIGHT_SHIFT_END;
 
         if (startTime.isBefore(nightEnd)) {
             // 06시 이전에 시작: 야간 근무
@@ -203,11 +209,11 @@ public class WorkRecord extends BaseEntity {
         this.baseSalary = this.regularHours.multiply(hourlyWage);
 
         // 야간 급여 = 야간 근무 시간 × (기본시급 × 1.5)
-        BigDecimal nightWage = hourlyWage.multiply(BigDecimal.valueOf(1.5));
+        BigDecimal nightWage = hourlyWage.multiply(OVERTIME_RATE);
         this.nightSalary = this.nightHours.multiply(nightWage);
 
         // 휴일 급여 = 휴일 근무 시간 × (기본시급 × 1.5)
-        BigDecimal holidayWage = hourlyWage.multiply(BigDecimal.valueOf(1.5));
+        BigDecimal holidayWage = hourlyWage.multiply(OVERTIME_RATE);
         this.holidaySalary = this.holidayHours.multiply(holidayWage);
 
         // 총 급여 = 기본급 + 야간급 + 휴일급

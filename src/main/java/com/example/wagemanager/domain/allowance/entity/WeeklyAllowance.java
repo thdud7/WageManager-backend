@@ -21,6 +21,12 @@ import java.util.List;
 @Builder
 public class WeeklyAllowance extends BaseEntity {
 
+    // 주휴수당 및 연장수당 계산 상수
+    private static final BigDecimal MINIMUM_HOURS_FOR_PAID_LEAVE = BigDecimal.valueOf(15);
+    private static final BigDecimal STANDARD_WORK_HOURS_PER_WEEK = BigDecimal.valueOf(40);
+    private static final BigDecimal PAID_LEAVE_HOURS = BigDecimal.valueOf(8);
+    private static final BigDecimal OVERTIME_RATE = BigDecimal.valueOf(1.5);
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -74,16 +80,12 @@ public class WeeklyAllowance extends BaseEntity {
     // 주휴수당 계산
     public void calculateWeeklyPaidLeave() {
         // 주 15시간 이상 근무 시 주휴수당 지급
-        BigDecimal minimumHoursForPaidLeave = BigDecimal.valueOf(15);
-
-        if (this.totalWorkHours.compareTo(minimumHoursForPaidLeave) >= 0) {
+        if (this.totalWorkHours.compareTo(MINIMUM_HOURS_FOR_PAID_LEAVE) >= 0) {
             // 주휴수당 = (1주 소정근로 시간 / 40) × 8 × 시급
             BigDecimal hourlyWage = this.contract.getHourlyWage();
-            BigDecimal standardWorkHoursPerWeek = BigDecimal.valueOf(40);
-            BigDecimal paidLeaveHours = BigDecimal.valueOf(8);
 
-            this.weeklyPaidLeaveAmount = (this.totalWorkHours.divide(standardWorkHoursPerWeek, 2, java.math.RoundingMode.HALF_UP))
-                    .multiply(paidLeaveHours)
+            this.weeklyPaidLeaveAmount = (this.totalWorkHours.divide(STANDARD_WORK_HOURS_PER_WEEK, 2, java.math.RoundingMode.HALF_UP))
+                    .multiply(PAID_LEAVE_HOURS)
                     .multiply(hourlyWage);
         } else {
             this.weeklyPaidLeaveAmount = BigDecimal.ZERO;
@@ -93,16 +95,13 @@ public class WeeklyAllowance extends BaseEntity {
     // 연장수당 계산
     public void calculateOvertime() {
         // 주 40시간 초과 시 연장수당 지급
-        BigDecimal standardWorkHoursPerWeek = BigDecimal.valueOf(40);
-        BigDecimal overtimeRate = BigDecimal.valueOf(1.5); // 시급의 150%
-
-        if (this.totalWorkHours.compareTo(standardWorkHoursPerWeek) > 0) {
-            BigDecimal overtimeHoursCalculated = this.totalWorkHours.subtract(standardWorkHoursPerWeek);
+        if (this.totalWorkHours.compareTo(STANDARD_WORK_HOURS_PER_WEEK) > 0) {
+            BigDecimal overtimeHoursCalculated = this.totalWorkHours.subtract(STANDARD_WORK_HOURS_PER_WEEK);
             this.overtimeHours = overtimeHoursCalculated;
 
             // 연장수당 = 초과 시간 × (기본시급 × 1.5)
             BigDecimal hourlyWage = this.contract.getHourlyWage();
-            this.overtimeAmount = overtimeHoursCalculated.multiply(hourlyWage).multiply(overtimeRate);
+            this.overtimeAmount = overtimeHoursCalculated.multiply(hourlyWage).multiply(OVERTIME_RATE);
         } else {
             this.overtimeHours = BigDecimal.ZERO;
             this.overtimeAmount = BigDecimal.ZERO;
