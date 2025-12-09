@@ -80,9 +80,8 @@ public class PaymentService {
      * 사업장별 송금 목록 조회
      */
     public List<PaymentDto.ListResponse> getPaymentsByWorkplace(Long workplaceId) {
-        return paymentRepository.findAll()
+        return paymentRepository.findByWorkplaceId(workplaceId)
                 .stream()
-                .filter(p -> p.getSalary().getContract().getWorkplace().getId().equals(workplaceId))
                 .map(PaymentDto.ListResponse::from)
                 .collect(Collectors.toList());
     }
@@ -91,14 +90,8 @@ public class PaymentService {
      * 사업장별 연월 송금 목록 조회
      */
     public List<PaymentDto.ListResponse> getPaymentsByWorkplaceAndYearMonth(Long workplaceId, Integer year, Integer month) {
-        return paymentRepository.findAll()
+        return paymentRepository.findByWorkplaceIdAndYearMonth(workplaceId, year, month)
                 .stream()
-                .filter(p -> {
-                    Salary salary = p.getSalary();
-                    return salary.getContract().getWorkplace().getId().equals(workplaceId) &&
-                            salary.getYear().equals(year) &&
-                            salary.getMonth().equals(month);
-                })
                 .map(PaymentDto.ListResponse::from)
                 .collect(Collectors.toList());
     }
@@ -107,15 +100,9 @@ public class PaymentService {
      * 미송금자 목록 조회 (송금 예정일이 지났는데 송금되지 않은 사람)
      */
     public List<PaymentDto.ListResponse> getUnpaidPayments(Long workplaceId, Integer year, Integer month) {
-        return paymentRepository.findAll()
+        return paymentRepository.findByWorkplaceIdAndYearMonthAndStatusNot(
+                        workplaceId, year, month, PaymentStatus.COMPLETED)
                 .stream()
-                .filter(p -> {
-                    Salary salary = p.getSalary();
-                    return salary.getContract().getWorkplace().getId().equals(workplaceId) &&
-                            salary.getYear().equals(year) &&
-                            salary.getMonth().equals(month) &&
-                            p.getStatus() != PaymentStatus.COMPLETED;
-                })
                 .map(PaymentDto.ListResponse::from)
                 .collect(Collectors.toList());
     }
@@ -124,9 +111,8 @@ public class PaymentService {
      * 사업장의 송금 대기 목록 조회
      */
     public List<PaymentDto.ListResponse> getPendingPaymentsByWorkplace(Long workplaceId) {
-        return paymentRepository.findByStatus(PaymentStatus.PENDING)
+        return paymentRepository.findByStatusAndWorkplaceId(PaymentStatus.PENDING, workplaceId)
                 .stream()
-                .filter(p -> p.getSalary().getContract().getWorkplace().getId().equals(workplaceId))
                 .map(PaymentDto.ListResponse::from)
                 .collect(Collectors.toList());
     }
