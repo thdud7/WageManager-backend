@@ -1,5 +1,7 @@
 package com.example.wagemanager.domain.salary.service;
 
+import com.example.wagemanager.common.exception.ErrorCode;
+import com.example.wagemanager.common.exception.NotFoundException;
 import com.example.wagemanager.domain.allowance.entity.WeeklyAllowance;
 import com.example.wagemanager.domain.allowance.repository.WeeklyAllowanceRepository;
 import com.example.wagemanager.domain.contract.entity.WorkerContract;
@@ -7,7 +9,7 @@ import com.example.wagemanager.domain.contract.repository.WorkerContractReposito
 import com.example.wagemanager.domain.salary.dto.SalaryDto;
 import com.example.wagemanager.domain.salary.entity.Salary;
 import com.example.wagemanager.domain.salary.repository.SalaryRepository;
-import com.example.wagemanager.domain.salary.util.TaxCalculator;
+import com.example.wagemanager.domain.salary.util.DeductionCalculator;
 import com.example.wagemanager.domain.workrecord.entity.WorkRecord;
 import com.example.wagemanager.domain.workrecord.repository.WorkRecordRepository;
 import lombok.RequiredArgsConstructor;
@@ -34,7 +36,7 @@ public class SalaryService {
      */
     public SalaryDto.Response getSalaryById(Long salaryId) {
         Salary salary = salaryRepository.findById(salaryId)
-                .orElseThrow(() -> new IllegalArgumentException("급여 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new NotFoundException(ErrorCode.SALARY_NOT_FOUND, "급여 정보를 찾을 수 없습니다."));
         return SalaryDto.Response.from(salary);
     }
 
@@ -89,7 +91,7 @@ public class SalaryService {
     @Transactional
     public SalaryDto.Response calculateSalaryByWorkRecords(Long contractId, Integer year, Integer month) {
         WorkerContract contract = workerContractRepository.findById(contractId)
-                .orElseThrow(() -> new IllegalArgumentException("계약 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new NotFoundException(ErrorCode.CONTRACT_NOT_FOUND, "계약을 찾을 수 없습니다."));
 
         // 월급날 기준으로 급여 계산 기간 설정
         // 예: 월급날이 21일이면, 전월 21일 ~ 당월 20일까지
@@ -102,7 +104,7 @@ public class SalaryService {
 
         // 기간 내 WorkRecord가 없으면 Salary 생성하지 않음
         if (workRecords.isEmpty()) {
-            throw new IllegalArgumentException("해당 기간 내 근무 기록이 없습니다.");
+            throw new NotFoundException(ErrorCode.WORK_RECORD_NOT_FOUND, "해당 기간 내 근무 기록이 없습니다.");
         }
 
         // WorkRecord의 이미 계산된 급여 칼럼값 합산
@@ -118,43 +120,26 @@ public class SalaryService {
             totalHolidayPay = totalHolidayPay.add(record.getHolidaySalary());
         }
 
-        // WeeklyAllowance에서 주휴수당과 연장수당 조회
-        List<WeeklyAllowance> weeklyAllowances = weeklyAllowanceRepository.findByContractId(contractId);
+        // WeeklyAllowance에서 주휴수당과 연장수당 조회 (년/월 기준 필터링)
+        List<WeeklyAllowance> weeklyAllowances = weeklyAllowanceRepository.findByContractIdAndYearMonth(contractId, year, month);
         BigDecimal totalWeeklyPaidLeaveAmount = BigDecimal.ZERO;
         BigDecimal totalOvertimePay = BigDecimal.ZERO;
 
         for (WeeklyAllowance allowance : weeklyAllowances) {
-            // 해당 월의 주간 수당만 포함 (allowance의 createdAt 기준)
-            LocalDate allowanceDate = allowance.getCreatedAt().toLocalDate();
-            if (allowanceDate.getYear() == year && allowanceDate.getMonthValue() == month) {
-                totalWeeklyPaidLeaveAmount = totalWeeklyPaidLeaveAmount.add(allowance.getWeeklyPaidLeaveAmount());
-                totalOvertimePay = totalOvertimePay.add(allowance.getOvertimeAmount());
-            }
+            totalWeeklyPaidLeaveAmount = totalWeeklyPaidLeaveAmount.add(allowance.getWeeklyPaidLeaveAmount());
+            totalOvertimePay = totalOvertimePay.add(allowance.getOvertimeAmount());
         }
 
         BigDecimal totalGrossPay = totalBasePay.add(totalNightPay).add(totalHolidayPay)
                 .add(totalWeeklyPaidLeaveAmount).add(totalOvertimePay);
 
-        // 세금 및 보험료 계산 (applyInsuranceAndTax 설정에 따라)
-        BigDecimal totalDeduction = BigDecimal.ZERO;
-        BigDecimal fourMajorInsurance = BigDecimal.ZERO;
-        BigDecimal incomeTax = BigDecimal.ZERO;
-        BigDecimal localIncomeTax = BigDecimal.ZERO;
+        // 세금 및 보험료 계산 (payrollDeductionType에 따라)
+        DeductionCalculator.TaxResult taxResult = DeductionCalculator.calculate(totalGrossPay, contract.getPayrollDeductionType());
 
-        if (contract.getApplyInsuranceAndTax()) {
-            // 4대보험 + 소득세 적용
-            TaxCalculator.PartTimeTax partTimeTax = TaxCalculator.calculatePartTimeTax(totalGrossPay, true);
-            fourMajorInsurance = partTimeTax.totalInsurance;
-            incomeTax = partTimeTax.incomeTax;
-            localIncomeTax = partTimeTax.localIncomeTax;
-            totalDeduction = partTimeTax.totalDeduction;
-        } else {
-            // 소득세만 적용 (3% + 0.3%)
-            TaxCalculator.FreelancerTax freelancerTax = TaxCalculator.calculateFreelancerTax(totalGrossPay);
-            incomeTax = freelancerTax.incomeTax;
-            localIncomeTax = freelancerTax.localIncomeTax;
-            totalDeduction = freelancerTax.totalTax;
-        }
+        BigDecimal fourMajorInsurance = taxResult.totalInsurance;
+        BigDecimal incomeTax = taxResult.incomeTax;
+        BigDecimal localIncomeTax = taxResult.localIncomeTax;
+        BigDecimal totalDeduction = taxResult.totalDeduction;
 
         BigDecimal netPay = totalGrossPay.subtract(totalDeduction);
 
