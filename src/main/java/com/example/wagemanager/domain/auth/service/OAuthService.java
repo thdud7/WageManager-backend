@@ -37,17 +37,15 @@ public class OAuthService {
     }
 
     /**
-     * 카카오 사용자 정보에서 표시 이름 추출
+     * 카카오 사용자 정보에서 이름 추출
      *
      * @param userInfo 카카오 사용자 정보
-     * @return 표시 이름
+     * @return 이름
      * @throws BadRequestException 카카오 계정의 이름 정보를 확인할 수 없는 경우
      */
     public String resolveDisplayName(KakaoUserInfo userInfo) {
-        String displayName = userInfo.displayName();
-
-        if (StringUtils.hasText(displayName)) {
-            return displayName;
+        if (StringUtils.hasText(userInfo.name())) {
+            return userInfo.name();
         }
 
         throw new BadRequestException(ErrorCode.KAKAO_NAME_NOT_FOUND, "카카오 계정의 이름 정보를 확인할 수 없습니다.");
