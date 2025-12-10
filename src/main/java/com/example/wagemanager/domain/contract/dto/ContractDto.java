@@ -65,7 +65,6 @@ public class ContractDto {
         @Max(value = 31, message = "급여 지급일은 31일 이하여야 합니다.")
         private Integer paymentDay;
 
-        @NotNull(message = "급여 공제 유형은 필수입니다.")
         private DeductionCalculator.PayrollDeductionType payrollDeductionType;
     }
 
