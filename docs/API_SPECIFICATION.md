@@ -172,13 +172,17 @@
 **Response:** `{"success": true, "data": [{"id": 1, "requester": {"name": "김민지"}, "status": "PENDING", ...}]}`
 
 ### 6.2 요청 상세
-**Response:** `{"success": true, "data": {"id": 1, "requested_end_time": "14:30", "reason": "...", ...}}`
+**Response:** `{"success": true, "data": {"id": 1, "requested_end_time": "14:30", ...}}`
 
 ### 6.3 요청 승인
-**Request:** `{"review_comment": "확인했습니다"}` → **Response:** `{"success": true, "data": {"status": "APPROVED"}}`
+**Response:** `{"success": true, "data": {"status": "APPROVED"}}`
+
+**참고:** 승인 시 추가적인 요청 본문(Request Body) 없이 승인 처리됩니다. 승인 시각은 `reviewed_at` 필드에 자동으로 기록됩니다.
 
 ### 6.4 요청 반려
-**Request:** `{"review_comment": "..."}` → **Response:** `{"success": true, "data": {"status": "REJECTED"}}`
+**Response:** `{"success": true, "data": {"status": "REJECTED"}}`
+
+**참고:** 반려 시 추가적인 요청 본문(Request Body) 없이 반려 처리됩니다. 반려 시각은 `reviewed_at` 필드에 자동으로 기록됩니다.
 
 ### 7.1 급여 목록
 **Query:** `?workplace_id=1&year=2025&month=11` → **Response:** `{"success": true, "data": [{"salary_id": 1, "net_pay": 1008000, ...}]}`
@@ -210,13 +214,20 @@
 **참고:** 근로자도 자신의 근무를 완료 처리할 수 있으며, 이 경우 자동으로 급여에 반영됩니다.
 
 ### 9.1 요청 생성
-**Request:** `{"work_record_id": 1, "requested_end_time": "14:30", "reason": "..."}` → **Response:** `{"success": true, "data": {"id": 1, "status": "PENDING"}}`
+**Request:** `{"work_record_id": 1, "requested_work_date": "2025-11-01", "requested_start_time": "09:00", "requested_end_time": "14:30"}` → **Response:** `{"success": true, "data": {"id": 1, "status": "PENDING"}}`
+
+**참고:** 정정 요청 생성 시 요청 근무일, 시작 시간, 종료 시간을 입력합니다. 원본 근무 시간은 자동으로 저장됩니다.
 
 ### 9.2 내 요청 목록
 **Response:** `{"success": true, "data": [{"id": 1, "status": "PENDING", ...}]}`
 
 ### 9.3 요청 상세
-**Response:** `{"success": true, "data": {"id": 1, "work_record_id": 1, "requested_end_time": "14:30", "reason": "손님이 많아서 30분 연장 근무했습니다", "status": "PENDING", ...}}`
+**Response:** `{"success": true, "data": {"id": 1, "work_record_id": 1, "original_start_time": "09:00", "original_end_time": "14:00", "requested_work_date": "2025-11-01", "requested_start_time": "09:00", "requested_end_time": "14:30", "status": "PENDING", "reviewed_at": null, ...}}`
+
+**응답 필드:**
+- `original_*`: 정정 요청 생성 시점의 원본 근무 시간
+- `requested_*`: 요청한 근무 시간
+- `reviewed_at`: 승인/반려 처리 시각 (처리 전에는 null)
 
 ### 9.4 요청 취소
 **Response:** `{"success": true, "message": "정정 요청이 취소되었습니다."}`
@@ -330,3 +341,4 @@
 - v1.2 (2025-11-06): 근로자용 정정 요청 상세 조회 API 추가 (9.3)
 - v1.3 (2025-12-09): 회원가입 API 제거 (카카오 로그인에서 자동 처리), 카카오 로그인 설명 보강
 - v1.4 (2025-12-10): 사용자 설정 API 구현 완료 (12.1-12.2), 알림 설정 관리 기능 추가
+- v1.5 (2025-12-11): 정정 요청 API 간소화 - reviewComment와 reason 필드 제거, 승인/반려 시 요청 본문 불필요, UserSettings 회원가입 시 자동 생성
