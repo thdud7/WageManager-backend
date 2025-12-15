@@ -2,9 +2,8 @@ package com.example.wagemanager.domain.holiday.service;
 
 import com.example.wagemanager.domain.holiday.dto.HolidayApiResponse;
 import com.example.wagemanager.domain.holiday.entity.Holiday;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -19,10 +18,10 @@ import java.util.Map;
 
 /**
  * 한국천문연구원 특일정보 API 클라이언트
+ * XML 파싱 전용 RestTemplate 사용 (컨트롤러와 분리)
  */
 @Component
 @Slf4j
-@RequiredArgsConstructor
 public class HolidayApiClient {
 
     private static final String API_BASE_URL = "http://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService";
@@ -34,8 +33,11 @@ public class HolidayApiClient {
     @Value("${holiday.api.key:}")
     private String apiKey;
 
-    private final RestTemplate restTemplate;
-    private final XmlMapper xmlMapper;
+    private final RestTemplate xmlRestTemplate;
+
+    public HolidayApiClient(@Qualifier("xmlRestTemplate") RestTemplate xmlRestTemplate) {
+        this.xmlRestTemplate = xmlRestTemplate;
+    }
 
     /**
      * 특정 연도의 공휴일 정보 가져오기
@@ -104,20 +106,18 @@ public class HolidayApiClient {
 
     /**
      * API 호출 및 파싱
+     * XML 전용 RestTemplate을 사용하여 자동으로 XML을 파싱
      */
     private List<Holiday> callApiAndParse(String url, int year) throws Exception {
         log.debug("API 호출: {}", url);
 
-        // API 호출
-        String xmlResponse = restTemplate.getForObject(url, String.class);
+        // API 호출 및 XML 자동 파싱 (xmlRestTemplate에 XmlMessageConverter가 등록되어 있음)
+        HolidayApiResponse response = xmlRestTemplate.getForObject(url, HolidayApiResponse.class);
 
-        if (xmlResponse == null || xmlResponse.isEmpty()) {
+        if (response == null) {
             log.warn("API 응답이 비어있습니다: year={}", year);
             return List.of();
         }
-
-        // XML 파싱
-        HolidayApiResponse response = xmlMapper.readValue(xmlResponse, HolidayApiResponse.class);
 
         // 응답 검증
         if (response.getHeader() == null || !response.getHeader().isSuccess()) {

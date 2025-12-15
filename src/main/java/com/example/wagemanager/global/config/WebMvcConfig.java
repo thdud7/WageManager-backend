@@ -2,12 +2,17 @@ package com.example.wagemanager.global.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
+import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.xml.MappingJackson2XmlHttpMessageConverter;
 import org.springframework.web.servlet.config.annotation.ContentNegotiationConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import java.util.List;
+
 /**
  * Spring MVC 설정
- * Content Negotiation 전략을 JSON 우선으로 설정
+ * - Content Negotiation 전략을 JSON 우선으로 설정
+ * - 컨트롤러는 JSON만 처리하도록 XML MessageConverter 제거
  */
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {
@@ -25,5 +30,12 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .defaultContentTypeStrategy(request -> {
                     return java.util.List.of(MediaType.APPLICATION_JSON);
                 });
+    }
+
+    @Override
+    public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
+        // XML MessageConverter 제거 - 컨트롤러는 JSON만 처리
+        // RestTemplate/WebClient에서는 별도로 XmlMapper를 설정하여 XML 파싱 가능
+        converters.removeIf(converter -> converter instanceof MappingJackson2XmlHttpMessageConverter);
     }
 }
