@@ -84,6 +84,23 @@ public class AuthController {
         return ApiResponse.success(refreshResult.getRefreshResponse());
     }
 
+    @Operation(
+            summary = "[개발용] 임시 로그인",
+            description = "개발용 임시 로그인 API입니다. 실제 사용자 검증 없이 토큰을 발급합니다. " +
+                    "배포 환경에서는 반드시 비활성화해야 합니다."
+    )
+    @PostMapping("/dev/login")
+    public ApiResponse<AuthDto.LoginResponse> devLogin(
+            @Valid @RequestBody AuthDto.DevLoginRequest request,
+            HttpServletResponse response) {
+        AuthService.LoginResult loginResult = authService.devLogin(request);
+
+        // Refresh Token을 HttpOnly Cookie로 설정
+        setRefreshTokenCookie(response, loginResult.getRefreshToken());
+
+        return ApiResponse.success(loginResult.getLoginResponse());
+    }
+
     /**
      * Refresh Token을 HttpOnly Cookie로 설정
      */
