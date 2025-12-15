@@ -95,4 +95,27 @@ public class AuthDto {
     public static class RefreshResponse {
         private String accessToken;
     }
+
+    /**
+     * 개발용 임시 로그인 요청 DTO
+     */
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    @Schema(name = "AuthDevLoginRequest")
+    public static class DevLoginRequest {
+        
+        @NotBlank(message = "사용자 ID는 필수입니다.")
+        @Schema(example = "1")
+        private String userId;
+
+        @NotBlank(message = "사용자 이름은 필수입니다.")
+        @Schema(example = "테스트 사용자")
+        private String name;
+
+        @NotBlank(message = "사용자 유형은 필수입니다.")
+        @Schema(example = "WORKER")
+        private String userType;
+    }
 }

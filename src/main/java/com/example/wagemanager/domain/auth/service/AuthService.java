@@ -190,4 +190,31 @@ public class AuthService {
             throw new BadRequestException(ErrorCode.INVALID_USER_TYPE, "유효하지 않은 사용자 유형입니다. EMPLOYER 또는 WORKER를 입력해주세요.");
         }
     }
+
+    /**
+     * 개발용 임시 로그인 (실제 사용자 조회/생성 없이 토큰 발급)
+     * 주의: 개발 환경에서만 사용하고 배포 환경에서는 반드시 비활성화 해야 함
+     *
+     * @param request 개발용 로그인 요청 DTO
+     * @return 로그인 결과 (응답 DTO + Refresh Token)
+     */
+    public LoginResult devLogin(AuthDto.DevLoginRequest request) {
+        Long userId = Long.parseLong(request.getUserId());
+        
+        // 토큰 생성
+        TokenService.TokenPair tokenPair = tokenService.generateTokenPair(userId);
+
+        // 응답 DTO 생성
+        AuthDto.LoginResponse loginResponse = AuthDto.LoginResponse.builder()
+                .accessToken(tokenPair.getAccessToken())
+                .userId(userId)
+                .name(request.getName())
+                .userType(request.getUserType())
+                .build();
+
+        return LoginResult.builder()
+                .loginResponse(loginResponse)
+                .refreshToken(tokenPair.getRefreshToken())
+                .build();
+    }
 }
