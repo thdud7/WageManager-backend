@@ -49,8 +49,8 @@ public class DataInitializer implements CommandLineRunner {
     private void createTestEmployer() {
         // 고용주 User 생성
         User employerUser = User.builder()
-                .kakaoId("dev_9999") // devLogin과 동일한 kakaoId 사용
-                .name("테스트 고용주")
+                .kakaoId("dev_1") // devLogin과 동일한 kakaoId 사용
+                .name("박지성")
                 .phone("010-1234-5678")
                 .userType(UserType.EMPLOYER)
                 .profileImageUrl("")
@@ -73,9 +73,9 @@ public class DataInitializer implements CommandLineRunner {
     private void createTestWorkers() {
         // 근로자 1
         User worker1User = User.builder()
-                .kakaoId("dev_8888")
-                .name("테스트 근로자")
-                .phone("010-9876-5432")
+                .kakaoId("dev_2")
+                .name("김민준")
+                .phone("010-1111-1111")
                 .userType(UserType.WORKER)
                 .profileImageUrl("")
                 .build();
@@ -84,17 +84,17 @@ public class DataInitializer implements CommandLineRunner {
 
         Worker worker1 = Worker.builder()
                 .user(worker1User)
-                .workerCode("DEV888") // 고유 코드
-                .kakaoPayLink("https://qr.kakaopay.com/dev_test_worker1")
+                .workerCode("WK001")
+                .kakaoPayLink("https://qr.kakaopay.com/dev_worker1")
                 .build();
         workerRepository.save(worker1);
         log.info("테스트 Worker1 생성 완료 (코드: {})", worker1.getWorkerCode());
 
         // 근로자 2
         User worker2User = User.builder()
-                .kakaoId("dev_7777")
-                .name("김철수")
-                .phone("010-1111-2222")
+                .kakaoId("dev_3")
+                .name("이서연")
+                .phone("010-2222-2222")
                 .userType(UserType.WORKER)
                 .profileImageUrl("")
                 .build();
@@ -103,17 +103,17 @@ public class DataInitializer implements CommandLineRunner {
 
         Worker worker2 = Worker.builder()
                 .user(worker2User)
-                .workerCode("DEV777")
-                .kakaoPayLink("https://qr.kakaopay.com/dev_test_worker2")
+                .workerCode("WK002")
+                .kakaoPayLink("https://qr.kakaopay.com/dev_worker2")
                 .build();
         workerRepository.save(worker2);
         log.info("테스트 Worker2 생성 완료 (코드: {})", worker2.getWorkerCode());
 
         // 근로자 3
         User worker3User = User.builder()
-                .kakaoId("dev_6666")
-                .name("이영희")
-                .phone("010-3333-4444")
+                .kakaoId("dev_4")
+                .name("박지훈")
+                .phone("010-3333-3333")
                 .userType(UserType.WORKER)
                 .profileImageUrl("")
                 .build();
@@ -122,10 +122,48 @@ public class DataInitializer implements CommandLineRunner {
 
         Worker worker3 = Worker.builder()
                 .user(worker3User)
-                .workerCode("DEV666")
-                .kakaoPayLink("https://qr.kakaopay.com/dev_test_worker3")
+                .workerCode("WK003")
+                .kakaoPayLink("https://qr.kakaopay.com/dev_worker3")
                 .build();
         workerRepository.save(worker3);
         log.info("테스트 Worker3 생성 완료 (코드: {})", worker3.getWorkerCode());
+
+        // 근로자 4
+        User worker4User = User.builder()
+                .kakaoId("dev_5")
+                .name("정수빈")
+                .phone("010-4444-4444")
+                .userType(UserType.WORKER)
+                .profileImageUrl("")
+                .build();
+        worker4User = userRepository.save(worker4User);
+        log.info("테스트 근로자4 User 생성: {}", worker4User.getName());
+
+        Worker worker4 = Worker.builder()
+                .user(worker4User)
+                .workerCode("WK004")
+                .kakaoPayLink("https://qr.kakaopay.com/dev_worker4")
+                .build();
+        workerRepository.save(worker4);
+        log.info("테스트 Worker4 생성 완료 (코드: {})", worker4.getWorkerCode());
+
+        // 근로자 5
+        User worker5User = User.builder()
+                .kakaoId("dev_6")
+                .name("최유진")
+                .phone("010-5555-5555")
+                .userType(UserType.WORKER)
+                .profileImageUrl("")
+                .build();
+        worker5User = userRepository.save(worker5User);
+        log.info("테스트 근로자5 User 생성: {}", worker5User.getName());
+
+        Worker worker5 = Worker.builder()
+                .user(worker5User)
+                .workerCode("WK005")
+                .kakaoPayLink("https://qr.kakaopay.com/dev_worker5")
+                .build();
+        workerRepository.save(worker5);
+        log.info("테스트 Worker5 생성 완료 (코드: {})", worker5.getWorkerCode());
     }
 }
