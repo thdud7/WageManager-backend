@@ -30,18 +30,8 @@ public class Worker extends BaseEntity {
     @Column(name = "bank_name")
     private String bankName;
 
-    @Column(name = "kakao_pay_link")
-    private String kakaoPayLink;
-
-    public void updateAccount(String accountNumber, String bankName, String kakaoPayLink) {
+    public void updateAccount(String accountNumber, String bankName) {
         if (accountNumber != null) this.accountNumber = accountNumber;
         if (bankName != null) this.bankName = bankName;
-        if (kakaoPayLink != null) this.kakaoPayLink = kakaoPayLink;
-    }
-
-    public void updateKakaoPayLink(String kakaoPayLink) {
-        if (kakaoPayLink != null) {
-            this.kakaoPayLink = kakaoPayLink;
-        }
     }
 }

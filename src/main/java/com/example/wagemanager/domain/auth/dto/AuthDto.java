@@ -1,12 +1,15 @@
 package com.example.wagemanager.domain.auth.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.util.StringUtils;
 
 /**
  * 인증 관련 DTO 모음
@@ -47,11 +50,25 @@ public class AuthDto {
         @Pattern(regexp = "^01[0-9]-\\d{4}-\\d{4}$", message = "전화번호 형식이 올바르지 않습니다. (예: 010-1234-5678)")
         private String phone;
 
-        @Pattern(regexp = "^https://qr\\.kakaopay\\.com/.*$", message = "카카오페이 링크 형식이 올바르지 않습니다.")
-        private String kakaoPayLink; // WORKER 타입인 경우 필수
+        private String bankName; // WORKER 타입인 경우 필수
+        private String accountNumber; // WORKER 타입인 경우 필수
 
         @Builder.Default
         private String profileImageUrl = "https://via.placeholder.com/150/CCCCCC/FFFFFF?text=User";
+
+        @AssertTrue(message = "근로자 타입은 은행명과 계좌번호가 필수입니다.")
+        @JsonIgnore
+        @Schema(hidden = true)
+        public boolean isBankInfoProvidedForWorker() {
+            if (!StringUtils.hasText(userType)) {
+                return true;
+            }
+            String normalizedUserType = userType.trim();
+            boolean isWorker = "WORKER".equalsIgnoreCase(normalizedUserType);
+            boolean hasBankName = StringUtils.hasText(bankName);
+            boolean hasAccountNumber = StringUtils.hasText(accountNumber);
+            return !isWorker || (hasBankName && hasAccountNumber);
+        }
     }
 
     /**

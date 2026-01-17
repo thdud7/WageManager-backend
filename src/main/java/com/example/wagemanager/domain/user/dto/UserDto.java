@@ -2,7 +2,9 @@ package com.example.wagemanager.domain.user.dto;
 
 import com.example.wagemanager.domain.user.entity.User;
 import com.example.wagemanager.domain.user.enums.UserType;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -67,7 +69,26 @@ public class UserDto {
         private String phone;
         private UserType userType;
         private String profileImageUrl;
-        private String kakaoPayLink; // WORKER 타입인 경우에만 사용
+
+        @Size(max = 50, message = "은행명은 50자 이하로 입력해주세요.")
+        @Schema(description = "은행명 (근로자 타입 필수)", example = "KB국민은행")
+        private String bankName;
+        
+
+        @Size(max = 50, message = "계좌번호는 50자 이하로 입력해주세요.")
+        @Schema(description = "계좌번호 (근로자 타입 필수)", example = "12345678901234")
+        private String accountNumber;
+
+        @AssertTrue(message = "근로자 타입은 은행명과 계좌번호가 필수입니다.")
+        @JsonIgnore
+        public boolean isValidBankInfoForWorker() {
+            if (userType != UserType.WORKER) {
+                return true;
+            }
+            boolean hasBankName = bankName != null && !bankName.isBlank();
+            boolean hasAccountNumber = accountNumber != null && !accountNumber.isBlank();
+            return hasBankName && hasAccountNumber;
+        }
     }
 
     @Getter
