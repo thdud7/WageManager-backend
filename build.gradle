@@ -7,7 +7,7 @@ plugins {
 
 group = 'com.example'
 version = '0.0.1-SNAPSHOT'
-description = 'wagemanager-web'
+description = 'paycheck-web'
 
 java {
 	toolchain {
@@ -65,7 +65,7 @@ jacocoTestReport {
 		classDirectories.setFrom(files(classDirectories.files.collect {
 			fileTree(dir: it, exclude: [
 				'**/config/**',
-				'**/WagemanagerApplication**',
+				'**/PayCheckApplication**',
 				'**/dto/**',
 				'**/enums/**'
 			])

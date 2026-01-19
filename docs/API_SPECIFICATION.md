@@ -1,4 +1,4 @@
-# WageManager API 명세서
+# PayCheck API 명세서
 
 ## API 목록 (통합 표)
 

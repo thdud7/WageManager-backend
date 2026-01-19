@@ -1,4 +1,4 @@
-# WageManager ERD (Entity Relationship Diagram)
+# PayCheck ERD (Entity Relationship Diagram)
 
 ## 엔티티 관계도
 
